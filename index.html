@@ -16,6 +16,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
+
   <style>
     :root {
       --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
@@ -33,199 +34,190 @@
 
     * { box-sizing: border-box; font-family: 'Prompt', sans-serif; -webkit-tap-highlight-color: transparent; }
     
-    body { 
-      background: var(--bg-gradient); 
-      margin: 0; 
-      padding: 0; 
-      min-height: 100vh;
-      display: flex; 
-      justify-content: center; 
-      align-items: flex-start;
-      color: var(--text-dark);
-    }
+    body { background: var(--bg-gradient); margin: 0; padding: 0; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; color: var(--text-dark); }
+    .app-container { width: 100%; max-width: 420px; padding: 30px 20px; }
 
-    .app-container {
-      width: 100%;
-      max-width: 420px;
-      padding: 30px 20px;
-    }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    .header-title { display: flex; align-items: center; gap: 10px; font-size: 1.5rem; font-weight: 600; margin: 0; }
+    .status-pill { display: flex; align-items: center; gap: 5px; background: #d1fae5; color: #059669; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; transition: 0.3s; }
+    .status-pill.offline { background: #fee2e2; color: #991b1b; }
 
-    /* ส่วนหัว */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 30px;
-    }
-    
-    .header-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin: 0;
-    }
-
-    .status-pill {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      background: #d1fae5;
-      color: #059669;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-    .status-pill .material-symbols-rounded { font-size: 14px; }
-
-    /* วิดเจ็ตเซ็นเซอร์ */
-    .sensor-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-
-    .widget-card {
-      background: var(--card-bg);
-      padding: 20px;
-      border-radius: 24px;
-      box-shadow: var(--card-shadow);
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      transition: transform 0.2s ease;
-    }
-
-    .widget-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 15px;
-    }
+    .sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+    .widget-card { background: var(--card-bg); padding: 20px; border-radius: 24px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: flex-start; }
+    .widget-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; justify-content: center; align-items: center; margin-bottom: 15px; }
     .icon-temp { background: rgba(255, 126, 103, 0.15); color: var(--color-temp); }
     .icon-hum { background: rgba(79, 172, 254, 0.15); color: var(--color-hum); }
+    .widget-value { font-size: 2rem; font-weight: 600; margin-bottom: 2px; line-height: 1; }
+    .widget-label { font-size: 0.85rem; color: var(--text-muted); }
 
-    .widget-value {
-      font-size: 2rem;
-      font-weight: 600;
-      margin-bottom: 2px;
-      line-height: 1;
+    .control-card { background: var(--card-bg); padding: 30px 20px; border-radius: 24px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+    .control-header { width: 100%; font-size: 1.1rem; font-weight: 500; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    
+    .main-btn { width: 120px; height: 120px; border-radius: 50%; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 8px 16px rgba(0,0,0,0.05); }
+    .main-btn .material-symbols-rounded { font-size: 48px; transition: color 0.3s; }
+    .main-btn:active { transform: scale(0.92); }
+    .btn-off { background: var(--btn-off-bg); }
+    .btn-off .material-symbols-rounded { color: var(--btn-off-icon); }
+    .btn-on { background: var(--btn-on-bg); box-shadow: 0 12px 24px rgba(16, 185, 129, 0.3); }
+    .btn-on .material-symbols-rounded { color: var(--btn-on-icon); }
+    .status-text { margin-top: 20px; font-size: 0.95rem; color: var(--text-muted); font-weight: 500; }
+
+    /* =========================================
+       สไตล์สำหรับ Wheel Time Picker
+       ========================================= */
+    .timer-card { padding: 20px; }
+    .picker-labels { display: flex; justify-content: space-between; width: 100%; padding: 0 15px; margin-bottom: 5px; font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+    .picker-labels div { flex: 1; text-align: center; }
+    .time-picker-container { display: flex; position: relative; width: 100%; height: 120px; background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 25px; }
+    .picker-highlight { position: absolute; top: 50%; left: 0; right: 0; height: 40px; margin-top: -20px; background: rgba(59, 130, 246, 0.1); border-top: 1px solid rgba(59, 130, 246, 0.3); border-bottom: 1px solid rgba(59, 130, 246, 0.3); pointer-events: none; }
+    .picker-col { flex: 1; height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
+    .picker-col::-webkit-scrollbar { display: none; } 
+    .picker-item { height: 40px; line-height: 40px; text-align: center; font-size: 1.25rem; font-weight: 600; color: var(--text-dark); scroll-snap-align: center; }
+    .picker-spacer { height: 40px; } 
+
+    /* ปุ่มตั้งเวลา */
+    .timer-actions { display: flex; gap: 15px; width: 100%; }
+    .action-btn { flex: 1; padding: 14px 10px; border: none; border-radius: 18px; font-size: 0.95rem; font-weight: 600; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .btn-set-on { background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); }
+    .btn-set-on:hover { box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4); transform: translateY(-2px); }
+    .btn-set-on:active { transform: scale(0.92); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
+    .btn-set-off { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); box-shadow: 0 8px 20px rgba(244, 63, 94, 0.3); }
+    .btn-set-off:hover { box-shadow: 0 10px 25px rgba(244, 63, 94, 0.4); transform: translateY(-2px); }
+    .btn-set-off:active { transform: scale(0.92); box-shadow: 0 4px 10px rgba(244, 63, 94, 0.3); }
+
+    /* =========================================
+       ✨ แอนิเมชันสำหรับหน้านับถอยหลัง (Pulse Effect) ✨
+       ========================================= */
+    .timer-countdown { 
+      width: 100%; text-align: center; padding: 30px 20px; 
+      border-radius: 20px; display: none; 
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); 
+      border: 1px solid transparent; 
+      transition: all 0.4s;
     }
     
-    .widget-label {
-      font-size: 0.85rem;
-      color: var(--text-muted);
+    /* ธีมสีแยกตามประเภท (เปิด/ปิด) */
+    .theme-on { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color: #bbf7d0; }
+    .theme-off { background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%); border-color: #fecdd3; }
+
+    /* วงกลมตรงกลาง */
+    .countdown-circle { 
+      position: relative; width: 75px; height: 75px; 
+      margin: 0 auto 20px auto; display: flex; justify-content: center; align-items: center; 
+      border-radius: 50%; background: white; box-shadow: 0 8px 20px rgba(0,0,0,0.06); 
+    }
+    .countdown-circle .material-symbols-rounded { font-size: 38px; z-index: 2; transition: 0.3s; }
+    
+    .theme-on .countdown-circle .material-symbols-rounded { color: #10b981; }
+    .theme-off .countdown-circle .material-symbols-rounded { color: #e11d48; }
+
+    /* เอฟเฟกต์วงแหวนกระจายตัว (Pulse Ring) */
+    .pulse-ring { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 50%; z-index: 1; }
+    .theme-on .pulse-ring { animation: pulse-on 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+    .theme-off .pulse-ring { animation: pulse-off 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+
+    @keyframes pulse-on {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+      70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    @keyframes pulse-off {
+      0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.6); }
+      70% { box-shadow: 0 0 0 20px rgba(225, 29, 72, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
     }
 
-    /* วิดเจ็ตควบคุมไฟ */
-    .control-card {
-      background: var(--card-bg);
-      padding: 30px 20px;
-      border-radius: 24px;
-      box-shadow: var(--card-shadow);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+    /* ตัวอักษรเวลานับถอยหลัง */
+    .countdown-label { font-size: 1rem; font-weight: 600; margin-bottom: 5px; }
+    .theme-on .countdown-label { color: #059669; }
+    .theme-off .countdown-label { color: #e11d48; }
 
-    .control-header {
-      font-size: 1.1rem;
-      font-weight: 500;
-      margin-bottom: 25px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .countdown-text { 
+      font-size: 2.2rem; font-weight: 700; margin-bottom: 25px; 
+      font-variant-numeric: tabular-nums; /* ทำให้ตัวเลขไม่กระตุกเวลาเปลี่ยน */
+      letter-spacing: 2px;
     }
+    .theme-on .countdown-text { color: #047857; }
+    .theme-off .countdown-text { color: #be123c; }
 
-    .main-btn {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+    .cancel-btn { 
+      background: white; color: #64748b; border: 1px solid #e2e8f0; 
+      padding: 10px 24px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; 
+      cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0 auto; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
     }
-
-    .main-btn .material-symbols-rounded {
-      font-size: 48px;
-      transition: color 0.3s;
-    }
-
-    .main-btn:active { transform: scale(0.92); }
-
-    .btn-off {
-      background: var(--btn-off-bg);
-    }
-    .btn-off .material-symbols-rounded { color: var(--btn-off-icon); }
-
-    .btn-on {
-      background: var(--btn-on-bg);
-      box-shadow: 0 12px 24px rgba(16, 185, 129, 0.3);
-    }
-    .btn-on .material-symbols-rounded { color: var(--btn-on-icon); }
-
-    .status-text {
-      margin-top: 20px;
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
+    .cancel-btn:hover { background: #f8fafc; transform: translateY(-2px); }
+    .cancel-btn:active { transform: scale(0.95); }
   </style>
 </head>
 <body>
 
   <div class="app-container">
     
-    <!-- ส่วนหัว -->
     <div class="header">
-      <h1 class="header-title">
-        <span class="material-symbols-rounded">home_app_logo</span> ห้องนอน
-      </h1>
-      <div class="status-pill" id="connStatus">
-        <span class="material-symbols-rounded">cloud_sync</span> ซิงค์แล้ว
-      </div>
+      <h1 class="header-title"><span class="material-symbols-rounded">home_app_logo</span> ห้องนอน</h1>
+      <div class="status-pill" id="connStatus"><span class="material-symbols-rounded">cloud_sync</span> กำลังซิงค์...</div>
     </div>
 
-    <!-- ส่วนแสดงสภาพอากาศ -->
     <div class="sensor-grid">
       <div class="widget-card">
-        <div class="widget-icon icon-temp">
-          <span class="material-symbols-rounded">device_thermostat</span>
-        </div>
+        <div class="widget-icon icon-temp"><span class="material-symbols-rounded">device_thermostat</span></div>
         <div class="widget-value"><span id="temp">--</span>°</div>
         <div class="widget-label">อุณหภูมิ</div>
       </div>
-
       <div class="widget-card">
-        <div class="widget-icon icon-hum">
-          <span class="material-symbols-rounded">humidity_percentage</span>
-        </div>
+        <div class="widget-icon icon-hum"><span class="material-symbols-rounded">humidity_percentage</span></div>
         <div class="widget-value"><span id="hum">--</span>%</div>
         <div class="widget-label">ความชื้น</div>
       </div>
     </div>
 
-    <!-- ส่วนควบคุมสวิตช์ไฟ -->
     <div class="control-card">
-      <div class="control-header">
-        ไฟส่องสว่าง
-      </div>
-      
       <button id="mainBtn" class="main-btn btn-off" onclick="toggleLight()">
         <span class="material-symbols-rounded">lightbulb</span>
       </button>
+      <div class="status-text" id="relayStatus">กำลังโหลดข้อมูล...</div>
+    </div>
+
+    <div class="control-card timer-card">
+      <div class="control-header" style="margin-bottom: 15px;">
+        <span class="material-symbols-rounded">timer</span> ตั้งเวลาล่วงหน้า
+      </div>
       
-      <div class="status-text" id="relayStatus">กำลังซิงค์ข้อมูล...</div>
+      <div id="timerSetup" style="width: 100%;">
+        <div class="picker-labels">
+          <div>ชม.</div><div>นาที</div><div>วินาที</div>
+        </div>
+
+        <div class="time-picker-container">
+          <div class="picker-highlight"></div>
+          <div class="picker-col" id="picker-h"></div>
+          <div class="picker-col" id="picker-m"></div>
+          <div class="picker-col" id="picker-s"></div>
+        </div>
+
+        <div class="timer-actions">
+          <button class="action-btn btn-set-on" onclick="startSchedule('ON')">
+            <span class="material-symbols-rounded" style="font-size: 20px;">wb_incandescent</span> เปิดไฟ
+          </button>
+          <button class="action-btn btn-set-off" onclick="startSchedule('OFF')">
+            <span class="material-symbols-rounded" style="font-size: 20px;">mode_night</span> ปิดไฟ
+          </button>
+        </div>
+      </div>
+
+      <!-- 🌟 หน้าต่างแสดงการนับถอยหลังพร้อมแอนิเมชัน 🌟 -->
+      <div id="timerDisplay" class="timer-countdown">
+        <div class="countdown-circle">
+          <div class="pulse-ring"></div>
+          <span id="countdownIcon" class="material-symbols-rounded">schedule</span>
+        </div>
+        <div class="countdown-label" id="countdownLabel">ระบบจะเปิดไฟในอีก</div>
+        <div class="countdown-text" id="countdownText">--:--:--</div>
+        
+        <button class="cancel-btn" onclick="cancelSchedule(true)">
+          <span class="material-symbols-rounded" style="font-size: 18px;">close</span> ยกเลิก
+        </button>
+      </div>
     </div>
 
   </div>
@@ -233,28 +225,35 @@
   <script>
     // ==========================================
     // ⚠️ นำข้อมูลจาก Firebase มาใส่ตรงนี้ ⚠️
-    // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyDZr-2sgP5_JJXbxHem_8hGNFf4bGFP2l8",
       databaseURL: "https://smartroom-iot-d418c-default-rtdb.asia-southeast1.firebasedatabase.app",
     };
+    // ==========================================
 
-    // เปิดใช้งาน Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     let currentState = "OFF";
 
-    // 1. ดักจับอุณหภูมิ
+    db.ref('.info/connected').on('value', function(snap) {
+      const statusPill = document.getElementById('connStatus');
+      if (snap.val() === true) {
+        statusPill.innerHTML = '<span class="material-symbols-rounded">cloud_sync</span> ออนไลน์';
+        statusPill.className = "status-pill";
+      } else {
+        statusPill.innerHTML = '<span class="material-symbols-rounded">cloud_off</span> ออฟไลน์';
+        statusPill.className = "status-pill offline";
+      }
+    });
+
     db.ref('/room/temp').on('value', (snapshot) => {
       document.getElementById('temp').innerText = snapshot.val() !== null ? snapshot.val().toFixed(1) : "--";
     });
 
-    // 2. ดักจับความชื้น
     db.ref('/room/hum').on('value', (snapshot) => {
       document.getElementById('hum').innerText = snapshot.val() !== null ? snapshot.val().toFixed(1) : "--";
     });
 
-    // 3. ดักจับสถานะไฟและเปลี่ยนหน้าตาปุ่ม
     db.ref('/room/relay').on('value', (snapshot) => {
       currentState = snapshot.val() || "OFF";
       const btn = document.getElementById('mainBtn');
@@ -269,14 +268,118 @@
       }
     });
 
-    // 4. ฟังก์ชันสำหรับกดปุ่ม
     function toggleLight() {
-      // สั่นมือถือเบาๆ เมื่อกดปุ่ม (ทำงานบนมือถือที่รองรับ)
       if (navigator.vibrate) navigator.vibrate(50);
-      
       const newState = (currentState === "ON") ? "OFF" : "ON";
       db.ref('/room/relay').set(newState);
     }
+
+    function populateWheel(elementId, max) {
+      const col = document.getElementById(elementId);
+      let html = '<div class="picker-spacer"></div>';
+      for(let i=0; i<=max; i++) {
+        html += `<div class="picker-item">${i.toString().padStart(2, '0')}</div>`;
+      }
+      html += '<div class="picker-spacer"></div>';
+      col.innerHTML = html;
+    }
+
+    populateWheel('picker-h', 23);
+    populateWheel('picker-m', 59);
+    populateWheel('picker-s', 59);
+
+    let timerInterval = null;
+    let targetTime = null;
+    let scheduledAction = null;
+
+    function startSchedule(action) {
+      if (navigator.vibrate) navigator.vibrate(50);
+      
+      const h = Math.round(document.getElementById('picker-h').scrollTop / 40);
+      const m = Math.round(document.getElementById('picker-m').scrollTop / 40);
+      const s = Math.round(document.getElementById('picker-s').scrollTop / 40);
+
+      const totalSeconds = (h * 3600) + (m * 60) + s;
+
+      if (totalSeconds <= 0) return alert("กรุณาหมุนเลือกเวลาก่อนครับ");
+
+      const command = action + "," + totalSeconds;
+      db.ref('/room/timer').set(command);
+
+      targetTime = new Date().getTime() + (totalSeconds * 1000);
+      scheduledAction = action;
+
+      // ปรับเปลี่ยนธีม (สี+ไอคอน+ข้อความ) ตามประเภทที่กด
+      const displayDiv = document.getElementById('timerDisplay');
+      const iconSpan = document.getElementById('countdownIcon');
+      const labelDiv = document.getElementById('countdownLabel');
+
+      if (action === 'ON') {
+        displayDiv.className = 'timer-countdown theme-on';
+        iconSpan.innerText = 'wb_incandescent';
+        labelDiv.innerText = 'ระบบจะเปิดไฟในอีก';
+      } else {
+        displayDiv.className = 'timer-countdown theme-off';
+        iconSpan.innerText = 'mode_night';
+        labelDiv.innerText = 'ระบบจะปิดไฟในอีก';
+      }
+
+      document.getElementById('timerSetup').style.display = 'none';
+      document.getElementById('timerDisplay').style.display = 'block';
+
+      updateCountdownDisplay(); 
+      timerInterval = setInterval(updateCountdownDisplay, 1000);
+    }
+
+    function cancelSchedule(sendToBoard = false) {
+      if (sendToBoard) {
+        db.ref('/room/timer').set("CANCEL"); 
+      }
+      
+      clearInterval(timerInterval);
+      timerInterval = null;
+      
+      document.getElementById('timerSetup').style.display = 'block';
+      document.getElementById('timerDisplay').style.display = 'none';
+      
+      document.getElementById('picker-h').scrollTo({ top: 0, behavior: 'smooth' });
+      document.getElementById('picker-m').scrollTo({ top: 0, behavior: 'smooth' });
+      document.getElementById('picker-s').scrollTo({ top: 0, behavior: 'smooth' });
+
+      if (navigator.vibrate) navigator.vibrate(50);
+    }
+
+    function updateCountdownDisplay() {
+      const now = new Date().getTime();
+      const distance = targetTime - now;
+
+      if (distance <= 0) {
+        document.getElementById('countdownText').innerText = `กำลังทำ...`;
+        return;
+      }
+
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      // โชว์เฉพาะเวลา
+      let timeText = "";
+      if (hours > 0) timeText += hours.toString().padStart(2, '0') + ":";
+      timeText += minutes.toString().padStart(2, '0') + ":" + seconds.toString().padStart(2, '0');
+
+      document.getElementById('countdownText').innerText = timeText;
+    }
+
+    db.ref('/room/timer').on('value', (snapshot) => {
+      const val = snapshot.val();
+      if (val === "DONE" || val === "CANCEL") {
+        if (document.getElementById('timerDisplay').style.display === 'block') {
+           cancelSchedule(false); 
+           if (val === "DONE" && navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        }
+      }
+    });
+
   </script>
 </body>
 </html>
