@@ -195,7 +195,7 @@
       <!-- 🌟 เปลี่ยนจากข้อความธรรมดา เป็นแคปซูลตกแต่ง 🌟 -->
       <div class="timer-badge-container">
         <div class="timer-badge">
-          <span class="material-symbols-rounded" style="font-size: 20px;">timer</span> ตั้งเวลาล่วงหน้า
+          <span class="material-symbols-rounded" style="font-size: 20px;">timer</span> ตั้งเวลาเปิด-ปิดไฟล่วงหน้า
         </div>
       </div>
       
@@ -300,13 +300,16 @@
       // ดักฟังการเลื่อน (Scroll) เพื่อเปลี่ยนคลาสและทำให้เครื่องสั่น
       let lastIndex = 0;
       col.addEventListener('scroll', () => {
-        const currentIndex = Math.round(col.scrollTop / 50); // หาร 50 ตามความสูง item ใหม่
+        const currentIndex = Math.round(col.scrollTop / 50); 
         
         if (currentIndex !== lastIndex && currentIndex >= 0 && currentIndex <= max) {
-          // สั่นมือถือสั้นๆ (5 มิลลิวินาที) ให้ความรู้สึกเหมือนฟันเฟือง (ทำงานได้ดีบน Android)
-          if (navigator.vibrate) navigator.vibrate(5); 
           
-          // สลับคลาสเพื่อขยายตัวเลข
+          // 🌟 ปรับแก้ 1: เพิ่มระยะเวลาสั่นจาก 5ms เป็น 15ms หรือสั่นแบบแพทเทิร์น
+          if (navigator.vibrate) {
+             // ใช้ 15ms เพื่อให้มอเตอร์มีแรงหมุนพอที่จะกระแทกนิ้ว
+             navigator.vibrate(15); 
+          }
+          
           const oldItem = document.getElementById(`${elementId}-val-${lastIndex}`);
           const newItem = document.getElementById(`${elementId}-val-${currentIndex}`);
           if (oldItem) oldItem.classList.remove('active-item');
