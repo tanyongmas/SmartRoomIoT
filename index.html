@@ -218,6 +218,7 @@
     const db = firebase.database();
     let currentState = "OFF";
 
+    // 1. ซิงค์ข้อมูลทั่วไป (อุณหภูมิ ความชื้น สถานะไฟ)
     db.ref('.info/connected').on('value', function(snap) {
       const statusPill = document.getElementById('connStatus');
       if (snap.val() === true) {
@@ -229,19 +230,13 @@
       }
     });
 
-    db.ref('/room/temp').on('value', (snapshot) => {
-      document.getElementById('temp').innerText = snapshot.val() !== null ? snapshot.val().toFixed(1) : "--";
-    });
-
-    db.ref('/room/hum').on('value', (snapshot) => {
-      document.getElementById('hum').innerText = snapshot.val() !== null ? snapshot.val().toFixed(1) : "--";
-    });
-
+    db.ref('/room/temp').on('value', (snapshot) => { document.getElementById('temp').innerText = snapshot.val() !== null ? snapshot.val().toFixed(1) : "--"; });
+    db.ref('/room/hum').on('value', (snapshot) => { document.getElementById('hum').innerText = snapshot.val() !== null ? snapshot.val().toFixed(1) : "--"; });
+    
     db.ref('/room/relay').on('value', (snapshot) => {
       currentState = snapshot.val() || "OFF";
       const btn = document.getElementById('mainBtn');
       const statusText = document.getElementById('relayStatus');
-      
       if (currentState === "ON") {
         btn.className = "main-btn btn-on";
         statusText.innerHTML = "สถานะ: <strong style='color:#10b981;'>เปิด (ON)</strong>";
@@ -253,45 +248,28 @@
 
     function toggleLight() {
       if (navigator.vibrate) navigator.vibrate(50);
-      const newState = (currentState === "ON") ? "OFF" : "ON";
-      db.ref('/room/relay').set(newState);
+      db.ref('/room/relay').set((currentState === "ON") ? "OFF" : "ON");
     }
 
+    // สร้างแป้นหมุน
     function populateWheel(elementId, max) {
       const col = document.getElementById(elementId);
       let html = '<div class="picker-spacer"></div>';
-      for(let i=0; i<=max; i++) {
-        html += `<div class="picker-item">${i.toString().padStart(2, '0')}</div>`;
-      }
+      for(let i=0; i<=max; i++) { html += `<div class="picker-item">${i.toString().padStart(2, '0')}</div>`; }
       html += '<div class="picker-spacer"></div>';
       col.innerHTML = html;
     }
+    populateWheel('picker-h', 23); populateWheel('picker-m', 59); populateWheel('picker-s', 59);
 
-    populateWheel('picker-h', 23);
-    populateWheel('picker-m', 59);
-    populateWheel('picker-s', 59);
-
+    // ==========================================
+    // 🌟 ระบบตั้งเวลาแบบซิงค์ข้ามอุปกรณ์ 🌟
+    // ==========================================
     let timerInterval = null;
     let targetTime = null;
     let scheduledAction = null;
 
-    function startSchedule(action) {
-      if (navigator.vibrate) navigator.vibrate(50);
-      
-      const h = Math.round(document.getElementById('picker-h').scrollTop / 40);
-      const m = Math.round(document.getElementById('picker-m').scrollTop / 40);
-      const s = Math.round(document.getElementById('picker-s').scrollTop / 40);
-
-      const totalSeconds = (h * 3600) + (m * 60) + s;
-
-      if (totalSeconds <= 0) return alert("กรุณาหมุนเลือกเวลาก่อนครับ");
-
-      const command = action + "," + totalSeconds;
-      db.ref('/room/timer').set(command);
-
-      targetTime = new Date().getTime() + (totalSeconds * 1000);
-      scheduledAction = action;
-
+    // เปลี่ยนหน้าตา UI
+    function showCountdownUI(action) {
       const displayDiv = document.getElementById('timerDisplay');
       const iconSpan = document.getElementById('countdownIcon');
       const labelDiv = document.getElementById('countdownLabel');
@@ -305,41 +283,52 @@
         iconSpan.innerText = 'mode_night';
         labelDiv.innerText = 'ระบบจะปิดไฟในอีก';
       }
-
       document.getElementById('timerSetup').style.display = 'none';
       document.getElementById('timerDisplay').style.display = 'block';
-
-      updateCountdownDisplay(); 
-      timerInterval = setInterval(updateCountdownDisplay, 1000);
     }
 
-    function cancelSchedule(sendToBoard = false) {
-      if (sendToBoard) {
-        db.ref('/room/timer').set("CANCEL"); 
-      }
-      
-      clearInterval(timerInterval);
-      timerInterval = null;
-      
+    function showPickerUI() {
       document.getElementById('timerSetup').style.display = 'block';
       document.getElementById('timerDisplay').style.display = 'none';
-      
       document.getElementById('picker-h').scrollTo({ top: 0, behavior: 'smooth' });
       document.getElementById('picker-m').scrollTo({ top: 0, behavior: 'smooth' });
       document.getElementById('picker-s').scrollTo({ top: 0, behavior: 'smooth' });
-
-      if (navigator.vibrate) navigator.vibrate(50);
     }
 
-    function updateCountdownDisplay() {
-      const now = new Date().getTime();
-      const distance = targetTime - now;
+    // เวลากดปุ่มตั้งเวลา
+    function startSchedule(action) {
+      if (navigator.vibrate) navigator.vibrate(50);
+      
+      const h = Math.round(document.getElementById('picker-h').scrollTop / 40);
+      const m = Math.round(document.getElementById('picker-m').scrollTop / 40);
+      const s = Math.round(document.getElementById('picker-s').scrollTop / 40);
+      const totalSeconds = (h * 3600) + (m * 60) + s;
 
+      if (totalSeconds <= 0) return alert("กรุณาหมุนเลือกเวลาก่อนครับ");
+
+      // 1. ส่งคำสั่งปกติให้ ESP32
+      db.ref('/room/timer').set(action + "," + totalSeconds);
+
+      // 2. ส่งเวลาให้ Firebase แจ้งหน้าเว็บทุกเครื่องให้ซิงค์กัน
+      const endTime = new Date().getTime() + (totalSeconds * 1000);
+      db.ref('/room/timer_ui').set({ action: action, endTime: endTime });
+    }
+
+    // เวลากดยกเลิก
+    function cancelSchedule(sendToBoard = false) {
+      if (navigator.vibrate) navigator.vibrate(50);
+      if (sendToBoard) { db.ref('/room/timer').set("CANCEL"); }
+      // ลบข้อมูลจาก Firebase จะทำให้หน้าเว็บทุกเครื่องกลับไปหน้าเดิมพร้อมกัน
+      db.ref('/room/timer_ui').remove(); 
+    }
+
+    // คำนวณตัวเลข
+    function updateCountdownDisplay() {
+      const distance = targetTime - new Date().getTime();
       if (distance <= 0) {
-        document.getElementById('countdownText').innerText = `กำลังทำ...`;
+        document.getElementById('countdownText').innerText = `กำลังดำเนินการ...`;
         return;
       }
-
       const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((distance % (1000 * 60)) / 1000);
@@ -347,20 +336,36 @@
       let timeText = "";
       if (hours > 0) timeText += hours.toString().padStart(2, '0') + ":";
       timeText += minutes.toString().padStart(2, '0') + ":" + seconds.toString().padStart(2, '0');
-
       document.getElementById('countdownText').innerText = timeText;
     }
 
-    db.ref('/room/timer').on('value', (snapshot) => {
-      const val = snapshot.val();
-      if (val === "DONE" || val === "CANCEL") {
-        if (document.getElementById('timerDisplay').style.display === 'block') {
-           cancelSchedule(false); 
-           if (val === "DONE" && navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    // 📡 ดักฟังข้อมูล UI (จุดสำคัญที่ทำให้ทุกเครื่องซิงค์กัน)
+    db.ref('/room/timer_ui').on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data && data.endTime) {
+        // ถ้ามีเครื่องอื่นกดตั้งเวลา ให้โชว์หน้าต่างนับถอยหลังตามทันที
+        targetTime = data.endTime;
+        scheduledAction = data.action;
+        showCountdownUI(data.action);
+        if (!timerInterval) {
+          updateCountdownDisplay();
+          timerInterval = setInterval(updateCountdownDisplay, 1000);
         }
+      } else {
+        // ถ้าไม่มีเวลา (หรือโดนยกเลิก) ให้กลับหน้าตั้งเวลาปกติ
+        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+        showPickerUI();
       }
     });
 
+    // 📡 ดักฟัง ESP32 ว่านับเวลาในบอร์ดเสร็จหรือยัง
+    db.ref('/room/timer').on('value', (snapshot) => {
+      const val = snapshot.val();
+      if (val === "DONE" || val === "CANCEL") {
+        db.ref('/room/timer_ui').remove(); // พอเสร็จแล้ว ล้างหน้าจอนับถอยหลังของทุกเครื่อง
+        if (val === "DONE" && navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      }
+    });
   </script>
 </body>
 </html>
