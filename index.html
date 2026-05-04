@@ -84,16 +84,48 @@
       width: 100%; /* ขยายความยาวให้เต็มพอดีขอบการ์ดซ้าย-ขวา */
     }
 
-    /* สไตล์สำหรับ Wheel Time Picker */
+    /* =========================================
+       ✨ สไตล์แป้นหมุน 3 มิติ (Wheel Time Picker) ✨
+       ========================================= */
     .timer-card { padding: 25px 20px; }
     .picker-labels { display: flex; justify-content: space-between; width: 100%; padding: 0 15px; margin-bottom: 5px; font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
     .picker-labels div { flex: 1; text-align: center; }
-    .time-picker-container { display: flex; position: relative; width: 100%; height: 120px; background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 25px; }
-    .picker-highlight { position: absolute; top: 50%; left: 0; right: 0; height: 40px; margin-top: -20px; background: rgba(59, 130, 246, 0.1); border-top: 1px solid rgba(59, 130, 246, 0.3); border-bottom: 1px solid rgba(59, 130, 246, 0.3); pointer-events: none; }
-    .picker-col { flex: 1; height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
+    
+    .time-picker-container { 
+      display: flex; position: relative; width: 100%; height: 150px; /* เพิ่มความสูงเพื่อให้เห็นการไล่ระดับจางๆ */
+      background: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0; 
+      overflow: hidden; margin-bottom: 25px; 
+      box-shadow: inset 0 4px 15px rgba(0,0,0,0.03); /* เพิ่มเงาลึกด้านใน */
+      
+      /* พระเอกของงาน: ทำให้ขอบบน-ล่างจางหายไป */
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%);
+      mask-image: linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%);
+    }
+    
+    .picker-highlight { 
+      position: absolute; top: 50%; left: 5%; right: 5%; height: 50px; margin-top: -25px; 
+      background: rgba(99, 102, 241, 0.08); /* สีไฮไลท์น้ำเงินจางๆ */
+      border-radius: 14px; pointer-events: none; z-index: 0;
+    }
+    
+    .picker-col { flex: 1; height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; z-index: 1; }
     .picker-col::-webkit-scrollbar { display: none; } 
-    .picker-item { height: 40px; line-height: 40px; text-align: center; font-size: 1.25rem; font-weight: 600; color: var(--text-dark); scroll-snap-align: center; }
-    .picker-spacer { height: 40px; } 
+    
+    /* ตัวเลขปกติ (จะดูเล็กและสีเทา) */
+    .picker-item { 
+      height: 50px; line-height: 50px; text-align: center; 
+      font-size: 1.25rem; font-weight: 500; color: #94a3b8; 
+      scroll-snap-align: center; 
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* แอนิเมชันตอนขยายขนาด */
+    }
+    
+    /* ตัวเลขที่อยู่ตรงกลาง (ขยายใหญ่ สีน้ำเงินเข้ม) */
+    .picker-item.active-item {
+      font-size: 1.8rem; font-weight: 700; color: #161622;
+      transform: scale(1.1);
+    }
+    
+    .picker-spacer { height: 50px; } 
 
     /* ปุ่มตั้งเวลา */
     .timer-actions { display: flex; gap: 15px; width: 100%; }
@@ -169,7 +201,7 @@
       
       <div id="timerSetup" style="width: 100%;">
         <div class="picker-labels">
-          <div>ชม.</div><div>นาที</div><div>วินาที</div>
+          <div>ชั่วโมง</div><div>นาที</div><div>วินาที</div>
         </div>
 
         <div class="time-picker-container">
@@ -252,14 +284,42 @@
     }
 
     // สร้างแป้นหมุน
+    // สร้างแป้นหมุน (พร้อมระบบจับตัวเลขที่กำลังถูกเลือก)
     function populateWheel(elementId, max) {
       const col = document.getElementById(elementId);
       let html = '<div class="picker-spacer"></div>';
-      for(let i=0; i<=max; i++) { html += `<div class="picker-item">${i.toString().padStart(2, '0')}</div>`; }
+      
+      for(let i=0; i<=max; i++) { 
+        // ให้เลข 00 เริ่มต้นด้วยคลาส active-item
+        const activeClass = (i === 0) ? 'active-item' : '';
+        html += `<div class="picker-item ${activeClass}" id="${elementId}-val-${i}">${i.toString().padStart(2, '0')}</div>`; 
+      }
       html += '<div class="picker-spacer"></div>';
       col.innerHTML = html;
+
+      // ดักฟังการเลื่อน (Scroll) เพื่อเปลี่ยนคลาสและทำให้เครื่องสั่น
+      let lastIndex = 0;
+      col.addEventListener('scroll', () => {
+        const currentIndex = Math.round(col.scrollTop / 50); // หาร 50 ตามความสูง item ใหม่
+        
+        if (currentIndex !== lastIndex && currentIndex >= 0 && currentIndex <= max) {
+          // สั่นมือถือสั้นๆ (5 มิลลิวินาที) ให้ความรู้สึกเหมือนฟันเฟือง (ทำงานได้ดีบน Android)
+          if (navigator.vibrate) navigator.vibrate(5); 
+          
+          // สลับคลาสเพื่อขยายตัวเลข
+          const oldItem = document.getElementById(`${elementId}-val-${lastIndex}`);
+          const newItem = document.getElementById(`${elementId}-val-${currentIndex}`);
+          if (oldItem) oldItem.classList.remove('active-item');
+          if (newItem) newItem.classList.add('active-item');
+          
+          lastIndex = currentIndex;
+        }
+      });
     }
-    populateWheel('picker-h', 23); populateWheel('picker-m', 59); populateWheel('picker-s', 59);
+    
+    populateWheel('picker-h', 23); 
+    populateWheel('picker-m', 59); 
+    populateWheel('picker-s', 59);
 
     // ==========================================
     // 🌟 ระบบตั้งเวลาแบบซิงค์ข้ามอุปกรณ์ 🌟
@@ -299,9 +359,9 @@
     function startSchedule(action) {
       if (navigator.vibrate) navigator.vibrate(50);
       
-      const h = Math.round(document.getElementById('picker-h').scrollTop / 40);
-      const m = Math.round(document.getElementById('picker-m').scrollTop / 40);
-      const s = Math.round(document.getElementById('picker-s').scrollTop / 40);
+      const h = Math.round(document.getElementById('picker-h').scrollTop / 50);
+      const m = Math.round(document.getElementById('picker-m').scrollTop / 50);
+      const s = Math.round(document.getElementById('picker-s').scrollTop / 50);
       const totalSeconds = (h * 3600) + (m * 60) + s;
 
       if (totalSeconds <= 0) return alert("กรุณาหมุนเลือกเวลาก่อนครับ");
